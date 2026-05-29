@@ -102,6 +102,10 @@ category distribution."*
 streamlit run streamlit_app.py
 ```
 
+Then open the **Local URL** it prints (e.g. `http://localhost:8501`). The bundled
+`.streamlit/config.toml` runs it headless, so it skips Streamlit's first-run
+email prompt and won't auto-open a browser — just click/copy the printed URL.
+
 Chat in the browser with reasoning shown in expandable panels. The sidebar
 switches session/user — sessions are **shared with the CLI** (same SQLite
 checkpointer), so you can start a conversation in one and resume it in the other.

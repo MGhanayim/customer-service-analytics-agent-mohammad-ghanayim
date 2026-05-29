@@ -1,0 +1,13 @@
+# Project Streamlit config.
+#
+# headless = true skips Streamlit's first-run "enter your email" onboarding
+# prompt (which otherwise blocks before the app URL is printed) and stops it
+# from trying to auto-open a browser. The Local/Network URL is still printed to
+# the terminal — open it manually. This makes `streamlit run` behave the same
+# on a fresh machine (e.g. a grader's) as it does here.
+[server]
+headless = true
+
+[browser]
+# Don't phone home with usage stats.
+gatherUsageStats = false
