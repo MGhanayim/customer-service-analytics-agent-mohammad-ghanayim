@@ -30,40 +30,6 @@ It **analyzes** the support data; it does not act as a support agent.
 
 ---
 
-## Why this project
-
-- **Clean, layered architecture** — strict dependency rules (tools never import
-  the agent), so each layer is testable in isolation. See [PLAN.md](PLAN.md).
-- **The full agent toolkit** — query routing, Pydantic-typed tools, multi-step
-  ReAct reasoning, a graceful iteration-limit fallback, two kinds of memory
-  (episodic + semantic), and an MCP server — wired together, not hand-waved.
-- **Grounded by design** — the agent answers only from tool results; an
-  out-of-scope router and explicit grounding rules keep it from hallucinating.
-
----
-
-## Architecture at a glance
-
-```
-START → router ─┬─ out_of_scope → decline → END
-                └─ else → agent ─┬─ tool_calls → tools → agent  (ReAct loop)
-                                 ├─ iteration cap → fallback → END
-                                 └─ final answer → END
-```
-
-| Layer | Package | Responsibility |
-|-------|---------|----------------|
-| 4 — Entry points | `main.py`, `streamlit_app.py`, `mcp_server.py` | Thin UIs over the graph |
-| 3 — Agent | `agent/` | StateGraph, nodes, prompts, memory |
-| 2 — Tools | `tools/` | 11 LangChain tools + Pydantic schemas |
-| 1 — Services/Data | `services/`, `data/` | LLM factory, profile store, dataset loader |
-| 0 — Config | `config.py` | Env vars, model names, tuning knobs |
-
-Full diagrams, dependency graph, and ReAct walkthroughs live in
-**[PLAN.md](PLAN.md)**; requirements and acceptance criteria in **[SPEC.md](SPEC.md)**.
-
----
-
 ## Setup (≈5 minutes)
 
 **Prerequisites:** Python 3.11 and a
@@ -142,18 +108,6 @@ checkpointer), so you can start a conversation in one and resume it in the other
 
 ---
 
-## Memory
-
-| Kind | What | Where | Keyed by |
-|------|------|-------|----------|
-| **Episodic** | Full message history (enables "show 3 more", follow-up math, resume-after-restart) | `conversations.db` via LangGraph `SqliteSaver` | `--session` |
-| **Semantic** | Distilled facts (name, topics, preferences) | `user_profiles/{user}.json` | `--user` |
-
-They are stored separately on purpose: conversation replay vs. durable facts are
-different shapes of memory.
-
----
-
 ## Model choice
 
 Both the router and the agent use **`Qwen/Qwen3-30B-A3B-Instruct-2507`** on
@@ -168,6 +122,52 @@ Nebius Token Factory:
   agent at **0.2** (natural summaries, still reliable tool calls). Separate
   factory functions mean a cheaper router model can be swapped in later without
   touching the agent.
+
+---
+
+## Why this project
+
+- **Clean, layered architecture** — strict dependency rules (tools never import
+  the agent), so each layer is testable in isolation. See [PLAN.md](PLAN.md).
+- **The full agent toolkit** — query routing, Pydantic-typed tools, multi-step
+  ReAct reasoning, a graceful iteration-limit fallback, two kinds of memory
+  (episodic + semantic), and an MCP server — wired together, not hand-waved.
+- **Grounded by design** — the agent answers only from tool results; an
+  out-of-scope router and explicit grounding rules keep it from hallucinating.
+
+---
+
+## Architecture at a glance
+
+```
+START → router ─┬─ out_of_scope → decline → END
+                └─ else → agent ─┬─ tool_calls → tools → agent  (ReAct loop)
+                                 ├─ iteration cap → fallback → END
+                                 └─ final answer → END
+```
+
+| Layer | Package | Responsibility |
+|-------|---------|----------------|
+| 4 — Entry points | `main.py`, `streamlit_app.py`, `mcp_server.py` | Thin UIs over the graph |
+| 3 — Agent | `agent/` | StateGraph, nodes, prompts, memory |
+| 2 — Tools | `tools/` | 11 LangChain tools + Pydantic schemas |
+| 1 — Services/Data | `services/`, `data/` | LLM factory, profile store, dataset loader |
+| 0 — Config | `config.py` | Env vars, model names, tuning knobs |
+
+Full diagrams, dependency graph, and ReAct walkthroughs live in
+**[PLAN.md](PLAN.md)**; requirements and acceptance criteria in **[SPEC.md](SPEC.md)**.
+
+---
+
+## Memory
+
+| Kind | What | Where | Keyed by |
+|------|------|-------|----------|
+| **Episodic** | Full message history (enables "show 3 more", follow-up math, resume-after-restart) | `conversations.db` via LangGraph `SqliteSaver` | `--session` |
+| **Semantic** | Distilled facts (name, topics, preferences) | `user_profiles/{user}.json` | `--user` |
+
+They are stored separately on purpose: conversation replay vs. durable facts are
+different shapes of memory.
 
 ---
 
