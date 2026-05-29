@@ -1,0 +1,43 @@
+# Secrets — NEVER commit
+.env
+.env.*
+!.env.example
+
+# Python generated
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Runtime state (created by the agent at runtime, not part of project)
+*.db
+*.sqlite
+*.sqlite3
+user_profiles/
+
+# Tool caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Editor / OS noise
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*~
+
+# Local tooling state (Claude Code, etc.) — not part of the project
+.claude/
+
+# Local-only docs (internal planning, not for public repo)
+BREAKDOWN.md
+SYLLABUS_MAPPING.md
