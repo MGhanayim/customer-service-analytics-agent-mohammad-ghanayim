@@ -10,7 +10,7 @@
 ![LangGraph](https://img.shields.io/badge/LangGraph-1.x-orange)
 ![Nebius](https://img.shields.io/badge/LLM-Nebius%20Qwen3--30B-green)
 ![MCP](https://img.shields.io/badge/MCP-FastMCP%203.x-purple)
-![Tests](https://img.shields.io/badge/tests-24%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-35%20passing-brightgreen)
 
 ---
 
@@ -181,10 +181,11 @@ different shapes of memory.
 pytest
 ```
 
-24 tests cover the **deterministic layer** — the dataset loader, a vocabulary
-drift guard (constants vs. live data), and every data/display tool (known input
-→ expected output, plus edge cases). The LLM layer (router, agent) is
-smoke-tested manually, since it is non-deterministic and costs API tokens.
+35 tests cover the **deterministic layer** — the dataset loader, a vocabulary
+drift guard (constants vs. live data), every data/display tool (known input →
+expected output, plus edge cases), and the user-profile store's merge semantics
+and path-traversal-safe slug. The LLM layer (router, agent) is smoke-tested
+manually, since it is non-deterministic and costs API tokens.
 
 ---
 

@@ -18,6 +18,7 @@ agent modules (state, prompts). Never imported by tools/.
 from __future__ import annotations
 
 from langchain_core.messages import AIMessage, SystemMessage
+from langgraph.graph import END
 
 from agent.prompts import (
     ROUTER_SYSTEM_PROMPT,
@@ -26,7 +27,6 @@ from agent.prompts import (
 )
 from agent.state import AgentState
 from config import ITERATION_LIMIT
-from langgraph.graph import END
 from services.llm import get_primary_llm, get_router_llm
 from tools import all_tools
 
@@ -84,7 +84,18 @@ def decline_node(state: AgentState) -> dict:
 
 
 def fallback_node(state: AgentState) -> dict:
-    """Emit the graceful 'reasoning limit reached' message (SPEC.md 1.5)."""
+    """Emit the graceful 'reasoning limit reached' message (SPEC.md 1.5).
+
+    We only reach here when the agent still wants tools but has hit the cap, so
+    the last message carries unexecuted ``tool_calls``. We REPLACE that message
+    in place (same id → add_messages updates rather than appends) so the
+    persisted history never contains an assistant tool-call without matching
+    tool results — that dangling shape would 400 on the next turn against an
+    OpenAI-compatible endpoint and poison the whole session.
+    """
+    last = state["messages"][-1]
+    if isinstance(last, AIMessage) and getattr(last, "tool_calls", None):
+        return {"messages": [AIMessage(content=_FALLBACK_MESSAGE, id=last.id)]}
     return {"messages": [AIMessage(content=_FALLBACK_MESSAGE)]}
 
 
@@ -101,13 +112,16 @@ def route_after_router(state: AgentState) -> str:
 def route_after_agent(state: AgentState) -> str:
     """Decide what happens after the agent runs.
 
-    Order matters: check the iteration cap FIRST (so a runaway loop is caught
-    even if it keeps requesting tools), then whether the agent asked for tools,
-    else the agent produced a final answer and we end.
+    A final answer (no tool_calls) always ends — even if the iteration cap was
+    reached on the same step, we keep the good answer rather than discarding it
+    for the fallback. The cap only diverts to ``fallback`` when the agent still
+    wants MORE tools but has run out of budget (the runaway-loop guard). Keeping
+    the cap check on the tool-wanting branch also guarantees ``fallback_node``
+    only ever sees a message with dangling tool_calls, which it neutralizes.
     """
+    last = state["messages"][-1]
+    if not getattr(last, "tool_calls", None):
+        return END
     if state.get("iteration_count", 0) >= ITERATION_LIMIT:
         return "fallback"
-    last = state["messages"][-1]
-    if getattr(last, "tool_calls", None):
-        return "tools"
-    return END
+    return "tools"

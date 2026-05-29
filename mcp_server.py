@@ -18,13 +18,15 @@ as the MCP tool schema.
 
 from __future__ import annotations
 
+from typing import Literal
+
 from fastmcp import FastMCP
 
 # Reuse the agent's tools so logic/validation is identical on both surfaces.
 from tools.data_tools import count_rows as _count_rows
+from tools.data_tools import filter_by_category as _filter_by_category
 from tools.data_tools import get_distribution as _get_distribution
 from tools.display_tools import show_examples as _show_examples
-from tools.data_tools import filter_by_category as _filter_by_category
 
 mcp = FastMCP("Customer Service Dataset Tools")
 
@@ -45,12 +47,16 @@ def filter_by_category(category: str) -> str:
 
 @mcp.tool
 def get_distribution(
-    group_by: str,
+    group_by: Literal["category", "intent", "flags"],
     filter_category: str | None = None,
     filter_intent: str | None = None,
 ) -> str:
     """Value-count distribution of a column ('category', 'intent', or 'flags'),
-    optionally restricted to a category and/or intent first."""
+    optionally restricted to a category and/or intent first.
+
+    ``group_by`` is constrained to the three valid columns at the MCP schema
+    level, so a bad value is rejected by the protocol with a clean validation
+    error rather than surfacing a raw exception from the underlying tool."""
     return _get_distribution.invoke(
         {
             "group_by": group_by,
