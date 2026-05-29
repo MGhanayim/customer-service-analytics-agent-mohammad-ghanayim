@@ -18,6 +18,8 @@ env/
 
 # Runtime state (created by the agent at runtime, not part of project)
 *.db
+*.db-shm
+*.db-wal
 *.sqlite
 *.sqlite3
 user_profiles/
